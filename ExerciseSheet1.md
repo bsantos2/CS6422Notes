@@ -1,4 +1,4 @@
-
+Used NotebookLM
 --------------------------------------------------------------------------------
 
 # M01: Database Systems Introduction and Relational Model
