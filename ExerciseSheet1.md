@@ -103,18 +103,9 @@ BuzzDB Structure: Manages data using a std::vector\<Tuple\> table to store all
 # M03: Storage Management, Generalized Data Types, and Smart Pointers
 
 This section explores how database systems manage storage, the evolution of data representation in BuzzDB to support various data types, and the crucial role of smart pointers in modern C++ for memory safety.
-
-1.
-
-Storage Technologies and File I/O
-
-◦
-
-Volatile Storage (DRAM): Fast, used for caching frequently accessed data ("hot data"), but data is lost without power52.
-
-◦
-
-Persistent Storage (Disk): Slower, but provides durability ensuring data safety even after power loss. Data is written from DRAM to disk to ensure persistence5253.
+## Storage Technologies and File I/O
+	1. Volatile Storage (DRAM): Fast, used for caching frequently accessed data ("hot data"), but data is lost without power52.
+	2. Persistent Storage (Disk): Slower, but provides durability ensuring data safety even after power loss. Data is written from DRAM to disk to ensure persistence5253.
 
 ◦
 
