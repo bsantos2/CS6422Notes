@@ -64,10 +64,10 @@ This section introduces the fundamental concepts of database systems, contrastin
 This section dives into the C++ implementation details for a simplified database system called BuzzDB, highlighting core C++ features and the ACID properties of transactions.
 
 ## BuzzDB Architecture and C++ Fundamentals
-BuzzDB Structure: Manages data using a std::vector\<Tuple\> table to store all tuples34.
-	1. Uses a std::map\<int, std::vector\<int\>\> index for quick data retrieval based on keys34.
-	2. Tuple Class (C++): Represents a row/record, typically with a key (identifier) and value (data)35.
-		1. `class Tuple { public: int key; int value; }
+BuzzDB Structure: Manages data using a `std::vector<Tuple>` table to store all tuples34.
+1. Uses a `std::map<int, std::vector<int>>` index for quick data retrieval based on keys34.
+2. Tuple Class (C++): Represents a row/record, typically with a key (identifier) and value (data)35.
+	`class Tuple { public: int key; int value; }`
 ### C++ Classes and Encapsulation:
 1. Classes: Blueprint for creating objects, allows creating complex data types, organizing data and functions, and writing modular code3536.
 2. Encapsulation: Bundling data (attributes) and methods that operate on the data within a class, controlling access (public, private, protected) to protect attributes3536.
