@@ -104,434 +104,124 @@ BuzzDB Structure: Manages data using a std::vector\<Tuple\> table to store all
 
 This section explores how database systems manage storage, the evolution of data representation in BuzzDB to support various data types, and the crucial role of smart pointers in modern C++ for memory safety.
 ## Storage Technologies and File I/O
-	1. Volatile Storage (DRAM): Fast, used for caching frequently accessed data ("hot data"), but data is lost without power52.
-	2. Persistent Storage (Disk): Slower, but provides durability ensuring data safety even after power loss. Data is written from DRAM to disk to ensure persistence5253.
-
-◦
-
-File I/O in C++ (<fstream>):
-
-▪
-
-std::ifstream for reading from files.
-
-▪
-
-std::ofstream for writing to files.
-
-▪
-
-Proper error handling (if (!inputFile)) is essential to prevent data disruption5354.
-
-◦
-
-Query Performance Timing: Using the C++ Chrono Library (<chrono>) to measure execution time is vital for optimizing database performance and comparative benchmarking5455.
-
-2.
-
-Generalizing Tuple and Field Classes
-
-◦
-
-Initial Tuple: Simple int key, int value55.
-
-◦
-
-Field Class for Multiple Data Types:
-
-▪
-
-To support various data types (integers, floats, strings), an enum FieldType { INT, FLOAT, STRING } is used to differentiate types5556.
-
-▪
-
-A union within the Field class allows different data types (int i; float f; char *s;) to share the same memory space, with the size of the union determined by its largest member55....
-
-▪
-
-Constructor Overloading: Allows creating Field objects directly from different data types (e.g., Field(int i), Field(float f), Field(const std::string &s))5758.
-
-▪
-
-A print() method handles displaying data based on its FieldType5759.
-
-◦
-
-Generalized Tuple Class: Stores a std::vector<Field> to hold multiple fields of varying types59.
-
-◦
-
-Handling Strings: Storing strings (char *s;) in the union requires dynamic memory allocation using new char[] in the constructor and proper null-termination5658.
-
-3.
-
-C++ Memory Management: new/delete and Smart Pointers
-
-◦
-
-new and delete Operators:
-
-▪
-
-new allocates memory on the heap for dynamic objects.
-
-▪
-
-delete or delete[] must be explicitly called to free heap-allocated memory and avoid memory leaks5860.
-
-◦
-
-Perils of Raw Pointers (Manual Memory Management):
-
-▪
-
-Memory Leaks: Forgetting to delete allocated memory61.
-
-▪
-
-Dangling Pointers: Pointers that refer to memory that has been deallocated, leading to undefined behavior if accessed6162.
-
-▪
-
-Double-Free Errors: Attempting to delete the same memory twice, causing runtime errors62.
-
-▪
-
-Ownership Ambiguity: Unclear responsibility for deleting dynamically allocated memory when pointers are passed between functions6263.
-
-◦
-
-Smart Pointers (std::unique_ptr):
-
-▪
-
-A C++ feature (<memory> header) that provides automatic memory management, enhancing code safety, readability, and maintainability63.
-
-▪
-
-std::unique_ptr enforces unique ownership of the managed object; when the unique_ptr goes out of scope or is reset(), the memory is automatically freed6364.
-
-▪
-
-Benefits: Prevents memory leaks, dangling pointers (by setting to nullptr on reset), double-free errors (single ownership), and ownership ambiguity (explicit transfer with std::move)63....
-
-◦
-
-Smart Field and Tuple Classes: std::unique_ptr<char[]> is used for string data in Field to manage dynamic string memory, and std::vector<std::unique_ptr<Field>> is used in Tuple to manage fields. std::move is crucial when adding fields to transfer ownership, as unique_ptr cannot be copied66....
-
-4.
-
-Copy and Move Semantics in C++
-
-◦
-
-Copy Semantics: Define how objects are copied, assigned, and passed. With raw pointers, default copying leads to shallow copies, causing issues like memory leaks and dangling pointers68.
-
-▪
-
-Deep Copying: Requires implementing a Copy Constructor and Copy Assignment Operator to ensure that new, independent copies of dynamically allocated data are created, especially for Field objects containing strings6869.
-
-◦
-
-Move Semantics: Allow efficient transfer of resources (ownership) from one object to another without deep copying. std::move is used to explicitly indicate that a resource's ownership is being transferred6970.
-
-5.
-
-Heap vs. Stack Memory Allocation
-
-◦
-
-Heap:
-
-▪
-
-Large pool of memory used for dynamic memory allocation (new/delete, smart pointers)70.
-
-▪
-
-Variables allocated on the heap can live beyond the scope in which they were created70.
-
-▪
-
-Ideal for objects and data structures whose size is not known at compile time or whose data needs to persist across different parts of the program70.
-
-▪
-
-Generally slower for allocation/deallocation than stack, but allows for larger data structures71.
-
-◦
-
-Stack:
-
-▪
-
-Used for automatic memory allocation (local variables, function parameters)7072.
-
-▪
-
-Lifetime is limited to the scope of the block in which they are declared and are automatically deallocated when the function returns72.
-
-▪
-
-Best for short-lived variables with known sizes at compile time72.
-
-▪
-
-Generally faster for allocation/deallocation than heap, but has size limits71.
-
-6.
-
-Page Class and Data Persistence
-
-◦
-
-Page Class: Represents the basic unit of disk storage for a database. Contains tuples (vector of unique_ptr<Tuple>) and tracks used_size7173.
-
-◦
-
-Serialization: The process of converting in-memory data (Page, Tuple, Field objects) into a format suitable for disk storage (e.g., raw bytes). This involves writing metadata (number of tuples/fields, field types, lengths) followed by the actual data74....
-
-◦
-
-Deserialization: The reverse process of reading data from disk and reconstructing the in-memory Page, Tuple, and Field objects. It involves reading metadata to correctly interpret and reconstruct the data76....
-
-▪
-
-reinterpret_cast is used during serialization/deserialization to treat raw memory buffers as specific data types7476.
-
-◦
-
-Modular Serialization: Implementing serialize methods for Field, Tuple, and Page classes independently promotes cleaner code, easier maintenance, and decoupled logic77....
-
-◦
-
-Static vs. Instance Methods for Deserialization:
-
-▪
-
-Static Methods: Pertain to the class itself, can be invoked without an object (Page::deserialize(filename)), and are suitable for creating new page objects directly from disk data8384.
-
-▪
-
-Instance Methods: Operate on a specific object (page2.read(filename)), suitable for updating an existing page object with data from disk82....
-
-◦
-
-Tuple Deletion in Page: deleteTuple method removes a tuple from the in-memory vector and updates used_size. However, this alone leads to data inconsistency if changes are not written back to disk (write(filename)), emphasizing the need for data synchronization84....
+1. Volatile Storage (DRAM): Fast, used for caching frequently accessed data ("hot data"), but data is lost without power52.
+2. Persistent Storage (Disk): Slower, but provides durability ensuring data safety even after power loss. Data is written from DRAM to disk to ensure persistence5253.
+### File I/O in C++ (`<fstream>`):
+1. std::ifstream for reading from files.
+2. std::ofstream for writing to files.
+3. Proper error handling (if (!inputFile)) is essential to prevent data disruption5354.
+4. Query Performance Timing: Using the C++ Chrono Library (`<chrono>`) to measure execution time is vital for optimizing database performance and comparative benchmarking5455.
+### Generalizing Tuple and Field Classes
+1. Initial Tuple: Simple int key, int value55.
+2. Field Class for Multiple Data Types:
+	1. To support various data types (integers, floats, strings), an `enum FieldType { INT, FLOAT, STRING }` is used to differentiate types5556.
+	2. A union within the Field class allows different data types (`int i; float f; char *s;`) to share the same memory space, with the size of the union determined by its largest member55....
+	3. Constructor Overloading: Allows creating Field objects directly from different data types (e.g., `Field(int i), Field(float f), Field(const std::string &s))`5758
+	4. A print() method handles displaying data based on its FieldType5759.
+3. Generalized Tuple Class: Stores a `std::vector<Field>` to hold multiple fields of varying types59.
+4. Handling Strings: Storing strings (`char *s;`) in the union requires dynamic memory allocation using new char[] in the constructor and proper null-termination5658.
+### C++ Memory Management: new/delete and Smart Pointers
+1. new and delete Operators:
+	1. new allocates memory on the heap for dynamic objects.
+	2. delete or delete[] must be explicitly called to free heap-allocated memory and avoid memory leaks5860.
+### Perils of Raw Pointers (Manual Memory Management):
+1. Memory Leaks: Forgetting to delete allocated memory61
+2. Dangling Pointers: Pointers that refer to memory that has been deallocated, leading to undefined behavior if accessed6162.
+3. Double-Free Errors: Attempting to delete the same memory twice, causing runtime errors62.
+4. Ownership Ambiguity: Unclear responsibility for deleting dynamically allocated memory when pointers are passed between functions6263.
+### Smart Pointers (std::unique_ptr):
+1. A C++ feature (`<memory>` header) that provides automatic memory management, enhancing code safety, readability, and maintainability63.
+2. `std::unique_ptr` enforces unique ownership of the managed object; when the unique_ptr goes out of scope or is reset(), the memory is automatically freed6364.
+3. Benefits: Prevents memory leaks, dangling pointers (by setting to nullptr on reset), double-free errors (single ownership), and ownership ambiguity (explicit transfer with std::move)63...
+4. Smart Field and Tuple Classes: `std::unique_ptr<char[]>` is used for string data in Field to manage dynamic string memory, and `std::vector<std::unique_ptr<Field>>` is used in Tuple to manage fields. `std::move` is crucial when adding fields to transfer ownership, as unique_ptr cannot be copied66....
+### Copy and Move Semantics in C++
+1. Copy Semantics: Define how objects are copied, assigned, and passed. With raw pointers, default copying leads to shallow copies, causing issues like memory leaks and dangling pointers68.
+2. Deep Copying: Requires implementing a Copy Constructor and Copy Assignment Operator to ensure that new, independent copies of dynamically allocated data are created, especially for Field objects containing strings6869.
+3. Move Semantics: Allow efficient transfer of resources (ownership) from one object to another without deep copying. `std::move` is used to explicitly indicate that a resource's ownership is being transferred6970.
+### Heap vs. Stack Memory Allocation
+#### Heap: 
+1. Large pool of memory used for dynamic memory allocation (new/delete, smart pointers)70.
+2. Variables allocated on the heap can live beyond the scope in which they were created70
+3. Ideal for objects and data structures whose size is not known at compile time or whose data needs to persist across different parts of the program70.
+4. Generally slower for allocation/deallocation than stack, but allows for larger data structures71.
+#### Stack:
+1. Used for automatic memory allocation (local variables, function parameters)7072.
+2. Lifetime is limited to the scope of the block in which they are declared and are automatically deallocated when the function returns72.
+3. Best for short-lived variables with known sizes at compile time72.
+4. Generally faster for allocation/deallocation than heap, but has size limits71.
+### Page Class and Data Persistence
+1. Page Class: Represents the basic unit of disk storage for a database. Contains tuples (`vector of unique_ptr<Tuple>`) and tracks used_size7173.
+2. Serialization: The process of converting in-memory data (Page, Tuple, Field objects) into a format suitable for disk storage (e.g., raw bytes). This involves writing metadata (number of tuples/fields, field types, lengths) followed by the actual data74....
+3. Deserialization: The reverse process of reading data from disk and reconstructing the in-memory Page, Tuple, and Field objects. It involves reading metadata to correctly interpret and reconstruct the data76....
+4. reinterpret_cast is used during serialization/deserialization to treat raw memory buffers as specific data types7476.
+5. Modular Serialization: Implementing serialize methods for Field, Tuple, and Page classes independently promotes cleaner code, easier maintenance, and decoupled logic77....
+### Static vs. Instance Methods for Deserialization:
+1.  Static Methods: Pertain to the class itself, can be invoked without an object (`Page::deserialize(filename)`), and are suitable for creating new page objects directly from disk data8384.
+2. Instance Methods: Operate on a specific object (`page2.read(filename)`), suitable for updating an existing page object with data from disk82....
+3. Tuple Deletion in Page: `deleteTuple` method removes a tuple from the in-memory vector and updates` used_size`. However, this alone leads to data inconsistency if changes are not written back to disk (`write(filename)`), emphasizing the need for data synchronization84....
 
 --------------------------------------------------------------------------------
 
-IV. M04_combined.pdf: Slotted Pages and File Management
+# M04: Slotted Pages and File Management
 
 This section builds upon the Page class by introducing SlottedPages, a more efficient data structure for managing variable-length records on disk, and details the overall file management within BuzzDB.
-
-1.
-
-Limitations of Simple Page Class
-
-◦
-
-Linear Scan for Space: Finding space for new tuples requires a linear scan, which is inefficient87.
-
-◦
-
-Wasted Space (Fragmentation): Poor handling of variable-length tuples leads to internal fragmentation and wasted space87.
-
-◦
-
-Compaction Needs: Pages periodically need to be "compacted" to consolidate free space, which involves moving tuples around and is a performance overhead8788.
-
-2.
-
-Slotted Page Structure
-
-◦
-
-Concept: A more advanced page organization that addresses the limitations of a simple Page8889.
-
-◦
-
-Slot Structure: struct Slot { uint16_t offset; uint16_t length; };88.
-
-◦
-
-Page Header: Contains a Slot Array (vector of Slot entries). Each slot points to a tuple's offset and length within the page's page_data buffer8890.
-
-◦
-
-Components of SlottedPage Class:
-
-▪
-
-std::unique_ptr<char[]> page_data;: Raw character array to hold the actual page data (tuples)90.
-
-▪
-
-std::vector<Slot> slots;: Array of slots in the header90.
-
-▪
-
-size_t free_space_offset;: Tracks the beginning of the free space within the page90.
-
-◦
-
-Benefits:
-
-▪
-
-Direct Access: Slots enable direct access to any tuple by its index, eliminating linear scans90.
-
-▪
-
-Efficient Space Utilization: Accommodates variable-length tuples efficiently, minimizing internal fragmentation89.
-
-▪
-
-Simplified Compaction: Only slot offsets need to be updated when tuples are moved within the page during compaction89.
-
-3.
-
-Slotted Page Operations
-
-◦
-
-Adding Tuples (bool addTuple(...)): Checks for available space and identifies the correct slot for efficient placement, updating the free_space_offset90....
-
-◦
-
-Deleting Tuples (void deleteTuple(size_t index)): Marks a slot as empty and reclaims its space. The actual tuple data is not immediately removed but the space becomes available for future insertions9192.
-
-◦
-
-Updating Tuples: Can be updated in-place if the new size permits, or moved within the page with the slot updated to reflect the new offset and length92.
-
-4.
-
-Database File Management in BuzzDB
-
-◦
-
-BuzzDB Class Members: Now includes std::fstream file; for database file I/O and std::vector<std::unique_ptr<SlottedPage>> pages; to manage loaded pages93.
-
-◦
-
-Database Initialization: In the constructor, the database file is opened with read/write permissions (std::ios::in | std::ios::out). The number of existing pages (num_pages) is calculated by seeking to the end of the file9394.
-
-◦
-
-Extending Database File (void extendDatabaseFile()): If the database is empty or all existing pages are full, a new empty SlottedPage is appended to the file. file.flush() is explicitly called to ensure the new page is written to disk immediately94....
-
-◦
-
-Loading Pages: Existing pages are deserialized from the file into SlottedPage objects and stored in the pages vector upon database initialization97.
-
-◦
-
-Flushing Database File (void SlottedPage::flush(std::fstream &file, uint16_t page_id)): A critical method that writes the contents of an in-memory SlottedPage back to its corresponding location on disk. This is essential for data persistence and is typically called after any modifications to a page. C++ buffered I/O often delays writes, so flush() forces immediate synchronization97....
-
-5.
-
-Index Construction
-
-◦
-
-Purpose: An index acts like a library index, providing a fast way to find data without scanning the entire database99.
-
-◦
-
-void BuzzDB::scanTableToBuildIndex(): This method builds the in-memory index from the on-disk database file.
-
-1.
-
-It iterates through all pages and slots99100.
-
-2.
-
-It obtains a pointer to the page data (char *page_buffer)100.
-
-3.
-
-It then uses reinterpret_cast<Slot *>(page_buffer) to treat the raw page data as an array of Slot structures, allowing access to tuple metadata (offset, length)100101.
-
-4.
-
-For each non-empty slot, it extracts the serialized tuple data using the offset and length101.
-
-5.
-
-std::istringstream: This C++ library is used to convert the serialized string data back into a Tuple object. It treats strings as input streams, enabling easy deserialization101....
-
-6.
-
-Finally, it extracts the key and value from the deserialized tuple and adds them to the BuzzDB's in-memory index map (index[key].push_back(value))102.
-
-6.
-
-Casting in C++
-
-◦
-
-C++ provides four main casting operators for type conversion: dynamic_cast, const_cast, reinterpret_cast, and static_cast103.
-
-◦
-
-static_cast: Used for conversions between types that are naturally compatible (e.g., float to int). It performs compile-time type checking103104.
-
-◦
-
-reinterpret_cast: A low-level cast that can convert any pointer type into any other pointer type, even if unrelated. It's powerful but dangerous, primarily used for raw memory manipulation (e.g., converting char* to Slot* to interpret raw page data)104.
-
-7.
-
-Streams in C++
-
-◦
-
-Stream Abstraction: A conceptual model for I/O operations that abstracts the specifics of data sources and destinations (e.g., files, memory buffers, console, network)104105. It focuses on the flow of data.
-
-◦
-
-std::fstream: Used for file input/output operations, enabling persistent data storage and retrieval105.
-
-◦
-
-std::stringstream: Used for in-memory string manipulation, treating strings as streams for easy conversion of data to and from string format106.
-
-8.
-
-Storage Manager Class
-
-◦
-
+## Limitations of Simple Page Class
+1. Linear Scan for Space: Finding space for new tuples requires a linear scan, which is inefficient87.
+2. Wasted Space (Fragmentation): Poor handling of variable-length tuples leads to internal fragmentation and wasted space87.
+3. Compaction Needs: Pages periodically need to be **"compacted"** to consolidate free space, which involves moving tuples around and is a performance overhead8788.
+## Slotted Page Structure
+1. Concept: A more advanced page organization that addresses the limitations of a simple Page8889.
+2. Slot Structure: `struct Slot { uint16_t offset; uint16_t length; };`
+3. Page Header: Contains a Slot Array (vector of Slot entries). Each slot points to a tuple's offset and length within the page's page_data buffer8890.
+### Components of SlottedPage Class:
+1. `std::unique_ptr<char[]> page_data;` : Raw character array to hold the actual page data (tuples)90.
+2. `std::vector<Slot> slots`;: Array of slots in the header90.
+3. `size_t free_space_offset;`: Tracks the beginning of the free space within the page90.
+### Benefits:
+1. Direct Access: Slots enable direct access to any tuple by its index, eliminating linear scans90.
+2. Efficient Space Utilization: Accommodates variable-length tuples efficiently, minimizing internal fragmentation89.
+3. Simplified Compaction: Only slot offsets need to be updated when tuples are moved within the page during compaction89.
+## Slotted Page Operations
+1. Adding Tuples (`bool addTuple(...)`): Checks for available space and identifies the correct slot for efficient placement, updating the free_space_offset90....
+2. Deleting Tuples (`void deleteTuple(size_t index)`): Marks a slot as empty and reclaims its space. The actual tuple data is not immediately removed but the space becomes available for future insertions9192.
+3. Updating Tuples: Can be updated in-place if the new size permits, or moved within the page with the slot updated to reflect the new offset and length92.
+## Database File Management in BuzzDB
+BuzzDB Class Members: Now includes` std::fstream file; `for database file I/O and `std::vector<std::unique_ptr<SlottedPage>>` pages; to manage loaded pages93.
+1. Database Initialization: In the constructor, the database file is opened with read/write permissions `(std::ios::in | std::ios::out)`. The number of existing pages (num_pages) is calculated by seeking to the end of the file9394.
+2. Extending Database File `(void extendDatabaseFile()`): If the database is empty or all existing pages are full, a new empty SlottedPage is appended to the file. `file.flush()` is explicitly called to ensure the new page is written to disk immediately94....
+3. Loading Pages: Existing pages are deserialized from the file into SlottedPage objects and stored in the pages vector upon database initialization97.
+4. Flushing Database File `(void SlottedPage::flush(std::fstream &file, uint16_t page_id))`: A critical method that writes the contents of an in-memory SlottedPage back to its corresponding location on disk. **This is essential for data persistence and is typically called after any modifications to a page.** C++ buffered I/O often delays writes, so flush() forces immediate synchronization97....
+## Index Construction
+1. Purpose: An index acts like a library index, providing a fast way to find data without scanning the entire database99.
+2. `void BuzzDB::scanTableToBuildIndex(): `This method builds the in-memory index from the on-disk database file.
+	1. It iterates through all pages and slots99100.
+	2. It obtains a pointer to the page data (`char *page_buffer`)100.
+	3. It then uses `reinterpret_cast<Slot *>(page_buffer)` to treat the raw page data as an array of Slot structures, allowing access to tuple metadata (offset, length)100101.
+	4. For each non-empty slot, it extracts the serialized tuple data using the offset and length101.
+	5. `std::istringstream:` This C++ library is used to convert the serialized string data back into a Tuple object. It treats strings as input streams, enabling easy deserialization101....
+	6. Finally, it extracts the key and value from the deserialized tuple and adds them to the BuzzDB's in-memory index map (`index[key].push_back(value)`)102.
+## Casting in C++
+1. C++ provides four main casting operators for type conversion: 
+	1. dynamic_cast
+	2. const_cast
+	3. static_cast: Used for conversions between types that are naturally compatible (e.g., float to int). It performs compile-time type checking103104.
+	4. reinterpret_cast: A low-level cast that can convert any pointer type into any other pointer type, even if unrelated. **It's powerful but dangerous, primarily used for raw memory manipulation (e.g., converting char* to Slot* to interpret raw page data)**.
+## Streams in C++
+1. Stream Abstraction: A conceptual model for I/O operations that abstracts the specifics of data sources and destinations (e.g., files, memory buffers, console, network)104105. It focuses on the flow of data.
+2. `std::fstream:` Used for file input/output operations, enabling persistent data storage and retrieval105.
+3. `std::stringstream:` Used for in-memory string manipulation, treating strings as streams for easy conversion of data to and from string format106.
+## Storage Manager Class
 Purpose: Encapsulates the low-level file I/O operations, providing a cleaner interface for BuzzDB to interact with disk storage106107.
+### Key Methods:
+1. Constructor/Destructor: Handles opening and closing the database file stream (fileStream), ensuring resource management44....
+2. `extend():` Dynamically extends the database file by appending new, empty slotted pages108.
+3. `flush(uint16_t page_id): `Persists changes made to an in-memory page to the disk, ensuring data integrity108109.
+4. `load(uint16_t page_id)`: Reads a specific page from the database file into memory44109.
+### RAII (Resource Acquisition Is Initialization): 
+The StorageManager class is designed using the RAII principle. This idiom binds the lifecycle of resources (like file handles) to the lifespan of objects. When a StorageManager object is created, it acquires the file stream resource (opens the file), and when the object is destroyed (e.g., goes out of scope), its destructor automatically releases the resource (closes the file stream), preventing resource leaks44....
 
-◦
-
-Key Methods:
-
-▪
-
-Constructor/Destructor: Handles opening and closing the database file stream (fileStream), ensuring resource management44....
-
-▪
-
-extend(): Dynamically extends the database file by appending new, empty slotted pages108.
-
-▪
-
-flush(uint16_t page_id): Persists changes made to an in-memory page to the disk, ensuring data integrity108109.
-
-▪
-
-load(uint16_t page_id): Reads a specific page from the database file into memory44109.
-
-◦
-
-RAII (Resource Acquisition Is Initialization): The StorageManager class is designed using the RAII principle. This idiom binds the lifecycle of resources (like file handles) to the lifespan of objects. When a StorageManager object is created, it acquires the file stream resource (opens the file), and when the object is destroyed (e.g., goes out of scope), its destructor automatically releases the resource (closes the file stream), preventing resource leaks44....
-
-◦
-
-Integration with BuzzDB: BuzzDB now interacts primarily with the BufferManager (covered in M05), which in turn uses the StorageManager for disk operations, promoting modularity and separation of concerns within the database system45110.
+### Integration with BuzzDB: 
+BuzzDB now interacts primarily with the BufferManager (covered in M05), which in turn uses the StorageManager for disk operations, promoting modularity and separation of concerns within the database system45110.
 
 --------------------------------------------------------------------------------
 
