@@ -75,7 +75,7 @@ BuzzDB Structure: Manages data using a `std::vector<Tuple>` table to store all
 1. Classes: Blueprint for creating objects, allows creating complex data types, organizing data and functions, and writing modular code3536.
 2. Encapsulation: Bundling data (attributes) and methods that operate on the data within a class, controlling access (public, private, protected) to protect attributes3536.
 ### C++ Standard Library Containers:
-1. `std::vector:` Dynamic array that can store collections of elements (e.g., Tuple objects), supporting `push_back` for adding elements and direct element access via '[]'3437.
+1. `std::vector:` Dynamic array that can store collections of elements (e.g., Tuple objects), supporting `push_back` for adding elements and direct element access via `[]` 3437.
 2. `std::map:` Associative container that stores elements in key-value pairs. Keys are kept in sorted order. Can associate multiple values with a single key by using a std::vector as the value type (e.g., `std::map<int, std::vector<int>> index;`)37....
 ### BuzzDB Operations (C++ Implementation)
 #### Insertion (void BuzzDB::insert(int key, int value)):
